@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root { color-scheme: light; padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<title>Who Wants to Be the Smartest Student?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Lexend:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a quiz-show set on a chalkboard stage. The question and four lozenge answers sit centre stage;
+     the cookie ladder (Q1 at the bottom, Q10 at the top) stands at the right, and folds into a strip above the question on phones.
+     One deliberate look (a dark studio), so a single theme. */
+  :root {
+    --stage: #0D2724;
+    --stage-hi: #1C4A43;
+    --panel: #0A1D1B;
+    --line: #2F5C55;
+    --chalk: #F4F1E6;
+    --muted: #A8C3BC;
+    --gold: #F6C343;
+    --gold-dim: #B98F2A;
+    --ink-on-gold: #2A1E05;
+    --lock: #FF9F1C;
+    --ok: #3DD68C;
+    --bad: #FF6B5E;
+    --ink-on-state: #0A1D1B;
+    --cookie: #C98A3E;
+    --cookie-hi: #E8B56A;
+    --chip: #4A2A14;
+    --display: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+    --body: "Lexend", "Segoe UI", system-ui, sans-serif;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    background:
+      radial-gradient(ellipse 80% 55% at 50% -8%, var(--stage-hi) 0, transparent 70%),
+      var(--stage);
+    color: var(--chalk);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 24px 48px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap { max-width: 1040px; margin-inline: auto; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:disabled { cursor: default; }
+  :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+
+  /* Cookie, drawn in CSS so it looks the same everywhere */
+  .cookie {
+    display: inline-block;
+    width: 1em; height: 1em;
+    border-radius: 50%;
+    vertical-align: -0.15em;
+    background:
+      radial-gradient(circle at 30% 34%, var(--chip) 0 7%, transparent 8%),
+      radial-gradient(circle at 63% 27%, var(--chip) 0 6%, transparent 7%),
+      radial-gradient(circle at 71% 62%, var(--chip) 0 8%, transparent 9%),
+      radial-gradient(circle at 37% 71%, var(--chip) 0 6%, transparent 7%),
+      radial-gradient(circle at 52% 49%, var(--chip) 0 4%, transparent 5%),
+      radial-gradient(circle at 38% 32%, var(--cookie-hi), var(--cookie) 72%);
+    box-shadow: inset -0.06em -0.08em 0 rgba(0, 0, 0, .22);
+  }
+  .plate {
+    display: inline-block;
+    width: 1em; height: 1em;
+    border-radius: 50%;
+    border: 2px dashed var(--line);
+    vertical-align: -0.15em;
+  }
+
+  /* ---------- Start screen ---------- */
+  .start { max-width: 640px; margin-inline: auto; display: flex; flex-direction: column; gap: 28px; padding-top: 12px; }
+  .marquee { text-align: center; display: flex; flex-direction: column; gap: 4px; }
+  .marquee .pre { font-family: var(--display); font-size: clamp(1.25rem, 5vw, 1.75rem); color: var(--muted); letter-spacing: .02em; }
+  .marquee h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(2.6rem, 11vw, 4.75rem);
+    line-height: 1;
+    margin: 0;
+    color: var(--gold);
+    text-wrap: balance;
+    text-shadow: 0 4px 0 var(--ink-on-gold);
+  }
+  .marquee p { margin: 12px auto 0; color: var(--muted); max-width: 44ch; }
+
+  .rules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .rule {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .rule b { font-family: var(--display); font-weight: 400; font-size: 1.5rem; line-height: 1.1; color: var(--gold); display: flex; align-items: center; gap: 8px; }
+  .rule span { color: var(--muted); font-size: .9375rem; }
+  @media (max-width: 560px) { .rules { grid-template-columns: minmax(0, 1fr); } }
+
+  .subjects { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 0; margin: 0; list-style: none; }
+  .subjects li { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: .875rem; color: var(--chalk); }
+
+  .entry { display: flex; flex-direction: column; gap: 8px; }
+  .entry label { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+  .entry-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .entry input {
+    flex: 1 1 220px; min-width: 0;
+    font: inherit; font-size: 1.125rem;
+    color: var(--chalk);
+    background: var(--panel);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .entry input::placeholder { color: var(--muted); opacity: .7; }
+  .entry input:focus { outline: none; border-color: var(--gold); }
+  .big-btn {
+    flex: 0 0 auto;
+    font-family: var(--display);
+    font-size: 1.375rem;
+    background: var(--gold);
+    color: var(--ink-on-gold);
+    border: 0;
+    border-radius: 12px;
+    padding: 12px 24px;
+    box-shadow: 0 4px 0 var(--gold-dim);
+    transition: transform .08s, box-shadow .08s;
+  }
+  .big-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--gold-dim); }
+  .best { text-align: center; color: var(--muted); font-size: .9375rem; margin: 0; }
+  .best strong { color: var(--chalk); font-weight: 600; }
+
+  /* ---------- Show bar ---------- */
+  .showbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .wordmark { font-family: var(--display); font-size: 1.125rem; color: var(--gold); line-height: 1.1; }
+  .wordmark small { display: block; font-family: var(--body); font-size: .75rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+  .bar-right { display: flex; align-items: center; gap: 10px; }
+  .jar {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 14px 6px 10px;
+    font-family: var(--display); font-size: 1.375rem; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .jar .cookie { font-size: 1.5rem; }
+  .jar.bump { animation: bump .45s ease-out; }
+  .jar small { font-family: var(--body); font-size: .8125rem; color: var(--muted); }
+  .icon-btn {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+    padding: 8px 14px; font-size: .875rem; color: var(--muted);
+  }
+
+  /* ---------- Play screen ---------- */
+  .play-grid { display: grid; grid-template-columns: minmax(0, 1fr) 248px; gap: 28px; align-items: start; }
+  .main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+  .q-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .qnum { font-family: var(--display); font-size: 1.75rem; line-height: 1; }
+  .qnum small { font-family: var(--body); font-size: .9375rem; color: var(--muted); margin-left: 6px; }
+  .subject {
+    font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-on-gold); background: var(--gold); border-radius: 999px; padding: 4px 12px;
+  }
+  .level { font-size: .8125rem; color: var(--muted); }
+
+  /* Lozenge shapes: an outer gold edge and an inner panel, both clipped to the same hexagon */
+  .q-card, .ans {
+    --tip: 22px;
+    position: relative;
+    clip-path: polygon(var(--tip) 0, calc(100% - var(--tip)) 0, 100% 50%, calc(100% - var(--tip)) 100%, var(--tip) 100%, 0 50%);
+    background: var(--gold-dim);
+    padding: 2px;
+  }
+  .q-in, .ans-in {
+    clip-path: polygon(calc(var(--tip) - 1px) 0, calc(100% - var(--tip) + 1px) 0, 100% 50%, calc(100% - var(--tip) + 1px) 100%, calc(var(--tip) - 1px) 100%, 0 50%);
+    background: var(--panel);
+  }
+  .q-in {
+    min-height: 120px;
+    display: grid; place-items: center;
+    padding: 22px calc(var(--tip) + 18px);
+    text-align: center;
+  }
+  .q-in p { margin: 0; font-size: clamp(1.125rem, 3.4vw, 1.4375rem); line-height: 1.45; font-weight: 500; text-wrap: balance; }
+
+  .answers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+  @media (max-width: 600px) { .answers { grid-template-columns: minmax(0, 1fr); } .ans.gone { display: none; } }
+  .ans { --tip: 16px; border: 0; text-align: left; transition: background .15s, transform .08s; }
+  .ans-in {
+    min-height: 60px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px calc(var(--tip) + 10px);
+    transition: background .15s, color .15s;
+  }
+  .ans-in b { font-family: var(--display); font-weight: 400; color: var(--gold); font-size: 1.25rem; line-height: 1; flex: none; }
+  .ans-in span { font-size: 1.0625rem; line-height: 1.35; min-width: 0; }
+  @media (hover: hover) { .ans:not(:disabled):hover { background: var(--gold); } .ans:not(:disabled):hover .ans-in { background: #12302C; } }
+  .ans:not(:disabled):active { transform: translateY(2px); }
+  .ans:focus-visible { outline: none; background: var(--chalk); }
+  .ans.gone { visibility: hidden; }
+  .ans.locked, .ans.locked .ans-in { background: var(--lock); }
+  .ans.locked .ans-in, .ans.locked .ans-in b { color: var(--ink-on-state); }
+  .ans.correct, .ans.correct .ans-in { background: var(--ok); }
+  .ans.correct .ans-in, .ans.correct .ans-in b { color: var(--ink-on-state); }
+  .ans.correct.win { animation: flash .5s ease-in-out 2; }
+  .ans.wrong, .ans.wrong .ans-in { background: var(--bad); }
+  .ans.wrong .ans-in, .ans.wrong .ans-in b { color: var(--ink-on-state); }
+  .ans.dim { opacity: .45; }
+
+  .helpers { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .helpers .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; margin-right: 4px; }
+  .helper {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; border: 2px solid var(--gold); color: var(--gold);
+    border-radius: 999px; padding: 6px 16px 6px 8px; font-weight: 600; font-size: .9375rem;
+  }
+  .helper i {
+    font-style: normal; font-family: var(--display); font-size: .9375rem;
+    background: var(--gold); color: var(--ink-on-gold); border-radius: 999px; padding: 2px 8px;
+  }
+  .helper:disabled { border-color: var(--line); color: var(--muted); text-decoration: line-through; }
+  .helper:disabled i { background: var(--line); color: var(--muted); }
+
+  .teacher {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--chalk); color: var(--panel);
+    border-radius: 14px; padding: 12px 16px;
+  }
+  .teacher b { font-family: var(--display); font-weight: 400; font-size: 1.0625rem; flex: none; }
+  .teacher p { margin: 0; min-width: 0; }
+
+  .feedback {
+    border-radius: 16px; padding: 16px 18px;
+    background: var(--panel); border: 2px solid var(--line);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .feedback.good { border-color: var(--ok); }
+  .feedback.bad { border-color: var(--bad); }
+  .fb-head { font-family: var(--display); font-size: 1.5rem; line-height: 1.15; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .feedback.good .fb-head { color: var(--ok); }
+  .feedback.bad .fb-head { color: var(--bad); }
+  .fb-head .cookie { font-size: 1.75rem; }
+  .feedback p { margin: 0; color: var(--chalk); max-width: 62ch; }
+  .feedback p.ans-line { color: var(--muted); }
+  .feedback p.ans-line strong { color: var(--chalk); font-weight: 600; }
+  .feedback .big-btn { align-self: flex-start; }
+
+  /* Cookie ladder */
+  .ladder { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px; }
+  .ladder h2 { font-family: var(--display); font-weight: 400; font-size: 1.125rem; margin: 2px 6px 10px; color: var(--gold); }
+  .ladder ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+  .rung {
+    display: grid; grid-template-columns: 2ch minmax(0, 1fr) auto; gap: 10px; align-items: center;
+    padding: 6px 10px; border-radius: 10px; color: var(--muted);
+    font-size: .9375rem;
+  }
+  .r-num { font-family: var(--display); font-size: 1.0625rem; text-align: right; font-variant-numeric: tabular-nums; }
+  .r-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .r-slot { font-size: 1.375rem; line-height: 1; display: grid; place-items: center; width: 1em; height: 1em; }
+  .rung.done { color: var(--chalk); }
+  .rung.now { background: var(--gold); color: var(--ink-on-gold); }
+  .rung.now .plate { border-color: var(--gold-dim); }
+  .rung .cookie.pop { animation: pop .6s cubic-bezier(.2, 1.6, .4, 1); }
+
+  @media (max-width: 820px) {
+    .play-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .ladder { order: -1; padding: 10px; }
+    .ladder h2 { display: none; }
+    .ladder ol { flex-direction: row-reverse; justify-content: space-between; gap: 2px; }
+    .rung { grid-template-columns: auto; justify-items: center; gap: 4px; padding: 6px 2px; flex: 1 1 0; min-width: 0; }
+    .r-sub { display: none; }
+    .r-num { text-align: center; font-size: .9375rem; }
+    .r-slot { font-size: clamp(1rem, 4.6vw, 1.375rem); }
+  }
+
+  /* ---------- Results ---------- */
+  .end { max-width: 720px; margin-inline: auto; display: flex; flex-direction: column; gap: 24px; }
+  .end-head { text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+  .end-head .pre { font-size: .8125rem; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-weight: 600; }
+  .end-head h1 {
+    font-family: var(--display); font-weight: 400; margin: 0;
+    font-size: clamp(2.4rem, 10vw, 4rem); line-height: 1.05; color: var(--gold);
+    text-shadow: 0 4px 0 var(--ink-on-gold); text-wrap: balance;
+  }
+  .end-head p { margin: 4px 0 0; color: var(--chalk); max-width: 46ch; }
+  .tray {
+    display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px;
+    justify-items: center; font-size: clamp(1.5rem, 6.5vw, 3rem);
+  }
+  @media (max-width: 420px) { .tray { grid-template-columns: repeat(5, minmax(0, 1fr)); row-gap: 10px; } }
+  .tally { text-align: center; font-family: var(--display); font-size: 1.75rem; margin: -8px 0 0; }
+  .tally small { font-family: var(--body); font-size: .9375rem; color: var(--muted); display: block; }
+  .end-actions { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .review { display: flex; flex-direction: column; gap: 10px; }
+  .review h2 { font-family: var(--display); font-weight: 400; font-size: 1.375rem; margin: 0; color: var(--gold); }
+  .review ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .review li {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; align-items: start;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+  }
+  .review .mark { grid-row: span 3; font-size: 1.5rem; line-height: 1; padding-top: 2px; }
+  .review .meta { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+  .review .qt { margin: 0; }
+  .review .yours { margin: 0; font-size: .9375rem; color: var(--muted); }
+  .review .yours strong { color: var(--chalk); font-weight: 600; }
+  .review .yours .no { color: var(--bad); }
+  .review .yours .yes { color: var(--ok); }
+
+  @keyframes pop { 0% { transform: scale(0) rotate(-90deg); } 100% { transform: scale(1) rotate(0); } }
+  @keyframes bump { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.15); } }
+  @keyframes flash { 50% { filter: brightness(1.25); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <!-- Start -->
+  <section class="start" id="start">
+    <header class="marquee">
+      <span class="pre">Who Wants to Be the</span>
+      <h1>Smartest Student?</h1>
+      <p>Ten questions from eight subjects. Answer correctly and a cookie goes into your jar. Can you collect all ten?</p>
+    </header>
+
+    <div class="rules">
+      <div class="rule"><b>10 questions</b><span>They start easy and get harder as you climb.</span></div>
+      <div class="rule"><b><i class="cookie"></i> 1 cookie</b><span>for every correct answer. A wrong answer earns none, but you keep playing.</span></div>
+      <div class="rule"><b>2 helpers</b><span>Use 50:50 or Ask the Teacher once each game.</span></div>
+    </div>
+
+    <ul class="subjects" aria-label="Subjects">
+      <li>English</li><li>Mathematics</li><li>Science</li><li>Physics</li>
+      <li>Chemistry</li><li>Geography</li><li>History</li><li>Literature</li>
+    </ul>
+
+    <form class="entry" id="entry">
+      <label for="name">Your name</label>
+      <div class="entry-row">
+        <input id="name" type="text" maxlength="20" autocomplete="off" placeholder="e.g. Mei Ling">
+        <button class="big-btn" type="submit">Start the show</button>
+      </div>
+    </form>
+    <p class="best" id="best" hidden></p>
+  </section>
+
+  <!-- Play -->
+  <section id="play" hidden>
+    <div class="showbar">
+      <div class="wordmark"><small>Who Wants to Be the</small>Smartest Student?</div>
+      <div class="bar-right">
+        <div class="jar" id="jar" aria-live="polite"><i class="cookie" aria-hidden="true"></i><span id="jar-n">0</span><small id="jar-who">cookies</small></div>
+        <button class="icon-btn" id="sound" type="button" aria-pressed="true">Sound on</button>
+      </div>
+    </div>
+
+    <div class="play-grid">
+      <div class="main">
+        <div class="q-meta">
+          <span class="qnum">Question <span id="qn">1</span><small>of 10</small></span>
+          <span class="subject" id="subject">Mathematics</span>
+        </div>
+
+        <div class="q-card"><div class="q-in"><p id="qtext"></p></div></div>
+
+        <div class="answers" id="answers">
+          <button class="ans" type="button" data-pos="0"><span class="ans-in"><b>A</b><span></span></span></button>
+          <button class="ans" type="button" data-pos="1"><span class="ans-in"><b>B</b><span></span></span></button>
+          <button class="ans" type="button" data-pos="2"><span class="ans-in"><b>C</b><span></span></span></button>
+          <button class="ans" type="button" data-pos="3"><span class="ans-in"><b>D</b><span></span></span></button>
+        </div>
+
+        <div class="teacher" id="teacher" hidden><b>Teacher says:</b><p id="hint"></p></div>
+
+        <div class="helpers" id="helpers">
+          <span class="label">Helpers</span>
+          <button class="helper" id="fifty" type="button"><i>50:50</i>Remove two</button>
+          <button class="helper" id="ask" type="button"><i>?</i>Ask the Teacher</button>
+        </div>
+
+        <div class="feedback" id="feedback" hidden aria-live="polite">
+          <div class="fb-head" id="fb-head"></div>
+          <p class="ans-line" id="fb-ans"></p>
+          <p id="fb-why"></p>
+          <button class="big-btn" id="next" type="button">Next question</button>
+        </div>
+      </div>
+
+      <aside class="ladder" aria-label="Cookie ladder">
+        <h2>Cookie ladder</h2>
+        <ol id="ladder"></ol>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="end" id="end" hidden>
+    <header class="end-head">
+      <span class="pre" id="end-pre">Final results</span>
+      <h1 id="end-title"></h1>
+      <p id="end-line"></p>
+    </header>
+    <div class="tray" id="tray" aria-hidden="true"></div>
+    <p class="tally" id="tally"></p>
+    <div class="end-actions">
+      <button class="big-btn" id="again" type="button">Play again</button>
+    </div>
+    <div class="review">
+      <h2>How you did</h2>
+      <ol id="review"></ol>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  var SUBJECTS = {
+    eng: 'English', math: 'Mathematics', sci: 'Science', phy: 'Physics',
+    chem: 'Chemistry', geo: 'Geography', hist: 'History', lit: 'Literature'
+  };
+
+  // [subject, level 1-3, question, correct answer, wrong, wrong, wrong, teacher's hint, explanation]
+  var BANK = [
+    ['eng', 1, 'Which word means the opposite of "ancient"?', 'Modern', 'Old', 'Broken', 'Huge',
+      'Think of something brand new, like the latest phone.', '"Ancient" means very old, so its opposite is "modern", which means new or up to date.'],
+    ['eng', 1, 'What is the plural of "child"?', 'Children', 'Childs', 'Childes', 'Childrens',
+      'This plural does not just add an "s".', '"Child" has an irregular plural: one child, two children.'],
+    ['eng', 1, 'Fill in the blank: "Yesterday, we ___ to the zoo."', 'went', 'go', 'goes', 'going',
+      '"Yesterday" tells you the action is in the past.', '"Went" is the past tense of "go", and "yesterday" tells us it already happened.'],
+    ['eng', 2, 'Which word means almost the same as "enormous"?', 'Gigantic', 'Tiny', 'Noisy', 'Gentle',
+      'An elephant could be described with this word.', '"Enormous" and "gigantic" both mean extremely big. Words with similar meanings are called synonyms.'],
+    ['eng', 2, 'Which word is the adverb? "The tortoise moved slowly across the road."', 'slowly', 'tortoise', 'moved', 'road',
+      'An adverb tells us how something is done. Many end in "-ly".', '"Slowly" tells us how the tortoise moved, so it is an adverb.'],
+    ['eng', 2, 'Which word is spelled correctly?', 'necessary', 'neccessary', 'necesary', 'neccesary',
+      'Remember: one Collar and two Sleeves. One "c", two "s".', '"Necessary" has one "c" and a double "s".'],
+    ['eng', 3, 'Which sentence uses a simile?', 'Her smile was as bright as the sun.', 'The wind howled all night.', 'Time is money.', 'Buzz went the busy bee.',
+      'A simile compares two things using "as" or "like".', 'A simile compares using "as" or "like". "As bright as the sun" is a simile.'],
+    ['eng', 3, 'If a test was "a piece of cake", what was it?', 'Very easy', 'Very tasty', 'Very short', 'Very surprising',
+      'This is an idiom. It has nothing to do with real food.', '"A piece of cake" is an idiom that means something is very easy to do.'],
+    ['eng', 3, 'Choose the correct question tag: "You are coming to the party, ___?"', "aren't you", "isn't you", "don't you", "won't you",
+      'Use the same helping verb as the sentence, but make it negative.', 'The sentence uses "are", so the question tag is "aren\'t you?"'],
+
+    ['math', 1, 'What is 7 × 8?', '56', '54', '48', '63',
+      '7 × 7 is 49. Add one more 7.', '7 × 8 = 56. A trick: 5, 6, 7, 8 → 56 = 7 × 8.'],
+    ['math', 1, 'How many sides does a hexagon have?', '6', '5', '7', '8',
+      'Look at the cells in a honeycomb.', 'A hexagon has 6 sides. A pentagon has 5 and an octagon has 8.'],
+    ['math', 1, 'Ali pays for a $1.80 curry puff with a $10 note. How much change does he get?', '$8.20', '$8.80', '$9.20', '$7.20',
+      'Count up from $1.80 to $2, then from $2 to $10.', '$10.00 − $1.80 = $8.20.'],
+    ['math', 2, 'What is 3/4 of 24?', '18', '16', '12', '20',
+      'First find 1/4 of 24, then multiply by 3.', '1/4 of 24 is 6, so 3/4 of 24 is 6 × 3 = 18.'],
+    ['math', 2, 'A rectangle is 9 cm long and 6 cm wide. What is its area?', '54 cm²', '30 cm²', '15 cm²', '45 cm²',
+      'Area of a rectangle = length × breadth.', 'Area = 9 cm × 6 cm = 54 cm². (30 cm is its perimeter.)'],
+    ['math', 2, 'What is 0.5 written as a percentage?', '50%', '5%', '0.5%', '15%',
+      'Multiply the decimal by 100.', '0.5 × 100 = 50, so 0.5 = 50%. It is the same as one half.'],
+    ['math', 3, 'A train leaves at 9.45 a.m. The journey takes 1 h 35 min. When does it arrive?', '11.20 a.m.', '10.20 a.m.', '11.10 a.m.', '11.30 a.m.',
+      'Add 1 hour first, then add the 35 minutes.', '9.45 a.m. + 1 h = 10.45 a.m. Then 10.45 a.m. + 35 min = 11.20 a.m.'],
+    ['math', 3, 'What is the average of 12, 15, 18 and 23?', '17', '16', '18', '17.5',
+      'Add all the numbers, then divide by how many numbers there are.', '12 + 15 + 18 + 23 = 68, and 68 ÷ 4 = 17.'],
+    ['math', 3, 'The ratio of boys to girls in a class is 3 : 5. There are 40 pupils. How many are girls?', '25', '15', '24', '20',
+      'There are 3 + 5 = 8 equal parts. How many pupils are in each part?', '8 parts = 40 pupils, so 1 part = 5. Girls are 5 parts: 5 × 5 = 25.'],
+
+    ['sci', 1, 'Which part of a plant takes in water from the soil?', 'Roots', 'Leaves', 'Flowers', 'Fruits',
+      'This part grows underground.', 'Roots take in water and mineral salts from the soil and hold the plant firmly in place.'],
+    ['sci', 1, 'Which of these animals is a mammal?', 'Whale', 'Shark', 'Penguin', 'Crocodile',
+      'Mammals breathe air and feed their babies with milk.', 'Whales breathe air through lungs and feed their young with milk, so they are mammals, even though they live in the sea.'],
+    ['sci', 1, 'How many legs does an insect have?', '6', '8', '4', '10',
+      'Spiders have 8 legs, but spiders are not insects.', 'All insects have 6 legs and 3 body parts. Spiders have 8 legs, so they are not insects.'],
+    ['sci', 2, 'Which gas do plants take in to make their food?', 'Carbon dioxide', 'Oxygen', 'Nitrogen', 'Helium',
+      'It is the gas that we breathe out.', 'In photosynthesis, plants use carbon dioxide, water and light energy to make food, and give out oxygen.'],
+    ['sci', 2, 'What is the correct order of a butterfly\'s life cycle?', 'Egg → larva → pupa → adult', 'Egg → pupa → larva → adult', 'Larva → egg → pupa → adult', 'Pupa → egg → larva → adult',
+      'The caterpillar comes before the chrysalis.', 'A butterfly hatches from an egg as a larva (caterpillar), becomes a pupa (chrysalis), then comes out as an adult.'],
+    ['sci', 2, 'Which organ pumps blood around the body?', 'Heart', 'Lungs', 'Stomach', 'Kidneys',
+      'Put your hand on your chest and feel it beating.', 'The heart pumps blood to every part of the body. It is part of the circulatory system.'],
+    ['sci', 3, 'Which system breaks food down into simpler substances?', 'Digestive system', 'Respiratory system', 'Circulatory system', 'Skeletal system',
+      'This system includes the stomach and intestines.', 'The digestive system breaks down food so the body can absorb it.'],
+    ['sci', 3, 'To stop mosquitoes from breeding at home, what should we remove?', 'Stagnant water', 'Dry leaves', 'Sunlight', 'Fresh air',
+      'Mosquitoes lay their eggs in this.', 'Mosquitoes lay eggs in still (stagnant) water, such as in flowerpot plates. Removing it helps prevent dengue.'],
+    ['sci', 3, 'Which of these is a fungus?', 'Mushroom', 'Fern', 'Moss', 'Seaweed',
+      'It cannot make its own food and it reproduces by spores.', 'A mushroom is a fungus. It cannot make its own food. Ferns and moss are plants, and seaweed is a type of alga.'],
+
+    ['phy', 1, 'Which of these will a magnet attract?', 'An iron nail', 'A plastic ruler', 'A wooden pencil', 'A glass marble',
+      'Magnets attract some metals.', 'Magnets attract magnetic materials like iron, steel, nickel and cobalt. Plastic, wood and glass are not magnetic.'],
+    ['phy', 1, 'What is the force that pulls things down towards the Earth?', 'Gravity', 'Friction', 'Magnetism', 'Air resistance',
+      'It is why a ball falls when you drop it.', 'Gravity pulls objects towards the Earth. That is why things fall down, not up.'],
+    ['phy', 1, 'Which of these gives out its own light?', 'The Sun', 'The Moon', 'A mirror', 'A diamond',
+      'Some of these only reflect light from something else.', 'The Sun is a source of light. The Moon, a mirror and a diamond only reflect light.'],
+    ['phy', 2, 'Which material is a good conductor of electricity?', 'Copper', 'Rubber', 'Wood', 'Plastic',
+      'Electrical wires are made of it inside their plastic covering.', 'Copper is a metal and lets electricity flow through it easily. Rubber, wood and plastic are insulators.'],
+    ['phy', 2, 'When you rub your hands together, they get warm. Which force causes this?', 'Friction', 'Gravity', 'Magnetism', 'Elastic force',
+      'This force acts when two surfaces rub against each other.', 'Friction between two rubbing surfaces turns kinetic energy into heat.'],
+    ['phy', 2, 'How is a shadow formed?', 'An object blocks light', 'Light bounces off a mirror', 'An object gives out its own light', 'Light passes through clear glass',
+      'Think about why there is shade under a tree.', 'A shadow forms when an opaque object blocks light, so light cannot reach the area behind it.'],
+    ['phy', 3, 'Through which of these does sound travel the fastest?', 'Steel', 'Water', 'Air', 'Outer space',
+      'Sound travels faster when particles are packed closely together.', 'Sound travels fastest through solids like steel, slower through water, slower still through air, and not at all through empty space.'],
+    ['phy', 3, 'Which energy change happens in a battery-powered torch?', 'Chemical → electrical → light', 'Light → electrical → chemical', 'Kinetic → sound → light', 'Heat → chemical → sound',
+      'The energy starts off stored inside the battery.', 'The battery stores chemical energy, which becomes electrical energy, which the bulb turns into light (and some heat).'],
+    ['phy', 3, 'During a storm, why do we see lightning before we hear thunder?', 'Light travels faster than sound', 'Thunder happens later', 'Our eyes are closer to the sky', 'Sound travels faster than light',
+      'Both happen at the same moment. Compare their speeds.', 'Lightning and thunder happen together, but light travels about a million times faster than sound, so it reaches us first.'],
+
+    ['chem', 1, 'At what temperature does pure water freeze?', '0°C', '100°C', '37°C', '50°C',
+      'It is the lowest number here.', 'Pure water freezes into ice at 0°C. 100°C is its boiling point, and 37°C is our body temperature.'],
+    ['chem', 1, 'Which of these is a gas?', 'Steam', 'Ice', 'Milk', 'Sand',
+      'You can see it rising from a boiling kettle.', 'Steam is water in its gas form. Ice is a solid, milk is a liquid and sand is a solid.'],
+    ['chem', 1, 'What happens to an iron nail left out in the rain for a long time?', 'It rusts', 'It melts', 'It evaporates', 'It turns into glass',
+      'Look for a reddish-brown coat.', 'Iron reacts with water and oxygen in the air to form rust, which is reddish-brown and flaky.'],
+    ['chem', 2, 'At sea level, at what temperature does water boil?', '100°C', '0°C', '80°C', '50°C',
+      'It is a nice round number.', 'Water boils at 100°C at sea level and turns into steam.'],
+    ['chem', 2, 'Salt stirred into water seems to disappear. What has the salt done?', 'Dissolved', 'Melted', 'Evaporated', 'Frozen',
+      'The water still tastes salty, so the salt is still there.', 'The salt has dissolved: it has spread out evenly in the water. Melting needs heat, which is different.'],
+    ['chem', 2, 'What is the chemical symbol for oxygen?', 'O', 'Ox', 'Og', 'Oy',
+      'It is just one letter.', 'Oxygen\'s symbol is O. Water, H₂O, contains oxygen.'],
+    ['chem', 3, 'What is the chemical symbol for gold?', 'Au', 'Ag', 'Go', 'Gl',
+      'It comes from "aurum", the Latin word for gold.', 'Gold is Au, from the Latin "aurum". Ag is silver, from "argentum".'],
+    ['chem', 3, 'Water (H₂O) is made of which two elements?', 'Hydrogen and oxygen', 'Helium and oxygen', 'Hydrogen and nitrogen', 'Carbon and oxygen',
+      'The letters H and O in H₂O are clues.', 'H stands for hydrogen and O for oxygen. Each water molecule has 2 hydrogen atoms and 1 oxygen atom.'],
+    ['chem', 3, 'Which of these changes cannot be reversed?', 'Burning paper', 'Melting ice', 'Freezing water', 'Dissolving sugar in water',
+      'Can you get the original thing back afterwards?', 'Burning makes new substances like ash and smoke, so you cannot get the paper back. The other changes can be undone.'],
+
+    ['geo', 1, 'Which continent is Singapore in?', 'Asia', 'Africa', 'Europe', 'Australia',
+      'It is the largest continent in the world.', 'Singapore is in Southeast Asia. Asia is the largest continent.'],
+    ['geo', 1, 'Which is the largest ocean in the world?', 'Pacific Ocean', 'Atlantic Ocean', 'Indian Ocean', 'Arctic Ocean',
+      'Its name means "peaceful".', 'The Pacific Ocean is the largest and deepest ocean. It covers about a third of the Earth.'],
+    ['geo', 1, 'The Causeway links Singapore to which country?', 'Malaysia', 'Indonesia', 'Thailand', 'Brunei',
+      'You can take a bus across it to Johor Bahru.', 'The Causeway connects Woodlands in Singapore to Johor Bahru in Malaysia.'],
+    ['geo', 2, 'What is the highest natural point in Singapore?', 'Bukit Timah Hill', 'Mount Faber', 'Fort Canning Hill', 'Mount Kinabalu',
+      '"Bukit" means hill in Malay.', 'Bukit Timah Hill is about 164 m high. Mount Kinabalu is much taller, but it is in Malaysia.'],
+    ['geo', 2, 'What is the imaginary line around the middle of the Earth called?', 'The Equator', 'The Prime Meridian', 'The Tropic of Cancer', 'The Arctic Circle',
+      'It divides the Earth into the Northern and Southern Hemispheres.', 'The Equator runs around the middle of the Earth, at 0° latitude.'],
+    ['geo', 2, 'What is the highest mountain in the world?', 'Mount Everest', 'K2', 'Mount Kilimanjaro', 'Mount Fuji',
+      'It is in the Himalayas.', 'Mount Everest, on the border of Nepal and China, is about 8,849 m high.'],
+    ['geo', 3, 'Singapore lies about 1 degree ___ of the Equator.', 'north', 'south', 'east', 'west',
+      'Malaysia is above Singapore on a map, and Indonesia is below.', 'Singapore is about 1° north of the Equator, which is why it is hot and rainy all year.'],
+    ['geo', 3, 'Which is the largest hot desert in the world?', 'Sahara', 'Gobi', 'Kalahari', 'Atacama',
+      'It covers much of North Africa.', 'The Sahara in North Africa is the largest hot desert. The Gobi is a cold desert.'],
+    ['geo', 3, 'Which body of water separates Singapore from Malaysia?', 'Strait of Johor', 'Strait of Malacca', 'Sunda Strait', 'South China Sea',
+      'It is named after the Malaysian state just across from Woodlands.', 'The Strait of Johor (Straits of Johor) lies between Singapore and Johor in Malaysia.'],
+
+    ['hist', 1, 'On which date does Singapore celebrate National Day?', '9 August', '31 August', '1 October', '1 May',
+      'It is in the same month as the school holidays in the middle of the year.', 'Singapore became independent on 9 August 1965, so National Day is on 9 August.'],
+    ['hist', 1, 'Who was Singapore\'s first Prime Minister?', 'Lee Kuan Yew', 'Goh Chok Tong', 'Lee Hsien Loong', 'Yusof Ishak',
+      'He led Singapore from 1959 to 1990.', 'Mr Lee Kuan Yew was Prime Minister from 1959 to 1990.'],
+    ['hist', 1, 'Who built the Great Pyramids of Giza?', 'The ancient Egyptians', 'The ancient Romans', 'The Vikings', 'The Aztecs',
+      'Giza is next to the River Nile.', 'The ancient Egyptians built the pyramids over 4,500 years ago as tombs for their pharaohs.'],
+    ['hist', 2, 'In which year did Sir Stamford Raffles arrive in Singapore?', '1819', '1965', '1942', '1869',
+      'It was more than 200 years ago.', 'Sir Stamford Raffles arrived in 1819 and set up a British trading post in Singapore.'],
+    ['hist', 2, 'In which year did Singapore become an independent country?', '1965', '1819', '1959', '1945',
+      'National Day celebrations in 2025 were for the 60th birthday.', 'Singapore became independent on 9 August 1965.'],
+    ['hist', 2, 'Who was the first person to walk on the Moon?', 'Neil Armstrong', 'Yuri Gagarin', 'Buzz Aldrin', 'Christopher Columbus',
+      '"One small step for man..."', 'Neil Armstrong walked on the Moon in 1969. Yuri Gagarin was the first person in space, and Buzz Aldrin was second on the Moon.'],
+    ['hist', 3, 'During World War II, which country occupied Singapore from 1942 to 1945?', 'Japan', 'Germany', 'Italy', 'Thailand',
+      'Singapore was renamed "Syonan-to" during this time.', 'Japan occupied Singapore from 1942 to 1945 and renamed it Syonan-to.'],
+    ['hist', 3, 'According to legend, which prince named the island "Singapura" after seeing a lion?', 'Sang Nila Utama', 'Parameswara', 'Hang Tuah', 'Sir Stamford Raffles',
+      'He was a prince from Palembang.', 'The Malay Annals tell how Sang Nila Utama saw a creature he believed was a lion and named the island Singapura, "Lion City".'],
+    ['hist', 3, 'Who was Singapore\'s first President?', 'Yusof Ishak', 'Lee Kuan Yew', 'S. R. Nathan', 'Halimah Yacob',
+      'His face is on Singapore\'s paper money.', 'Encik Yusof Ishak was Singapore\'s first President, from 1965 to 1970. His portrait is on our notes.'],
+
+    ['lit', 1, 'Who wrote "Charlie and the Chocolate Factory"?', 'Roald Dahl', 'J. K. Rowling', 'Enid Blyton', 'Dr Seuss',
+      'He also wrote "Matilda" and "The BFG".', 'Roald Dahl wrote "Charlie and the Chocolate Factory", "Matilda" and "The BFG".'],
+    ['lit', 1, 'In "Cinderella", what does Cinderella leave behind at the ball?', 'A glass slipper', 'A golden crown', 'A ring', 'A pumpkin',
+      'The prince uses it to find her.', 'Cinderella loses a glass slipper, and the prince searches for the girl whose foot fits it.'],
+    ['lit', 1, 'In the fable "The Tortoise and the Hare", who wins the race?', 'The tortoise', 'The hare', 'Nobody', 'The fox',
+      '"Slow and steady wins the race."', 'The hare is so sure of winning that he takes a nap, and the slow but steady tortoise wins.'],
+    ['lit', 2, 'Which boy never grows up and lives in Neverland?', 'Peter Pan', 'Pinocchio', 'Oliver Twist', 'Tom Sawyer',
+      'He can fly, and Tinker Bell is his friend.', 'Peter Pan, created by J. M. Barrie, lives in Neverland and never grows up.'],
+    ['lit', 2, 'Who wrote the play "Romeo and Juliet"?', 'William Shakespeare', 'Charles Dickens', 'Lewis Carroll', 'Mark Twain',
+      'He is the most famous playwright in the English language.', 'William Shakespeare wrote "Romeo and Juliet" over 400 years ago.'],
+    ['lit', 2, 'In "Alice\'s Adventures in Wonderland", which animal does Alice follow down the hole?', 'A White Rabbit', 'A Cheshire Cat', 'A Dodo', 'A Caterpillar',
+      'He is always late and checks his pocket watch.', 'Alice follows the White Rabbit, who is worried about being late, down the rabbit hole.'],
+    ['lit', 3, 'A poem with three lines of 5, 7 and 5 syllables is called a…', 'Haiku', 'Limerick', 'Sonnet', 'Ballad',
+      'This form of poem comes from Japan.', 'A haiku is a short Japanese poem with lines of 5, 7 and 5 syllables.'],
+    ['lit', 3, 'What is the name of the lion in "The Lion, the Witch and the Wardrobe"?', 'Aslan', 'Simba', 'Mufasa', 'Leo',
+      'The book was written by C. S. Lewis.', 'Aslan is the great lion of Narnia in C. S. Lewis\'s books.'],
+    ['lit', 3, 'What is the lesson of "The Boy Who Cried Wolf"?', 'People may not believe liars, even when they tell the truth', 'Wolves are dangerous animals', 'Always look after sheep', 'Shouting is the best way to get help',
+      'The boy tricked the villagers many times.', 'The boy lied so often that when a real wolf came, nobody believed him. Telling lies costs you people\'s trust.']
+  ];
+
+  var LEVELS = [1, 1, 1, 2, 2, 2, 2, 3, 3, 3];
+  var LEVEL_NAMES = ['', 'Warm-up', 'Getting harder', 'Brain-buster'];
+  var LETTERS = 'ABCD';
+  var BEST_KEY = 'smartest-student-best';
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var screens = { start: $('start'), play: $('play'), end: $('end') };
+  var ansBtns = Array.prototype.slice.call(document.querySelectorAll('.ans'));
+  var s = { phase: 'start' };
+  var sound = true;
+  var lockTimer = null;
+  var audio = null;
+
+  function shuffle(list) {
+    var a = list.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  // One question from every subject plus two extra, easy questions first, no subject twice in a row.
+  function pickQuestions() {
+    var keys = Object.keys(SUBJECTS);
+    var slots = keys.concat(shuffle(keys).slice(0, 2));
+    for (var tries = 0; tries < 50; tries++) {
+      slots = shuffle(slots);
+      if (slots.every(function (k, i) { return i === 0 || slots[i - 1] !== k; })) break;
+    }
+    var used = [];
+    return slots.map(function (k, i) {
+      var pool = [];
+      BANK.forEach(function (q, id) { if (q[0] === k && used.indexOf(id) === -1) pool.push(id); });
+      var exact = pool.filter(function (id) { return BANK[id][1] === LEVELS[i]; });
+      var list = exact.length ? exact : pool;
+      var id = list[Math.floor(Math.random() * list.length)];
+      used.push(id);
+      return id;
+    });
+  }
+
+  function readBest() { try { var v = parseInt(localStorage.getItem(BEST_KEY), 10); return isNaN(v) ? null : v; } catch (e) { return null; } }
+  function saveBest(n) { try { localStorage.setItem(BEST_KEY, String(n)); } catch (e) {} }
+
+  function score() { return (s.picks || []).filter(function (p) { return p === 0; }).length; }
+  function who() { return s.name ? s.name : 'Player'; }
+
+  function tone(freqs, type, step, peak) {
+    if (!sound) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      freqs.forEach(function (f, i) {
+        var o = audio.createOscillator(), g = audio.createGain();
+        var t = audio.currentTime + i * step;
+        o.type = type; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(peak, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + step + 0.1);
+        o.connect(g); g.connect(audio.destination);
+        o.start(t); o.stop(t + step + 0.15);
+      });
+    } catch (e) {}
+  }
+
+  function show(phase) {
+    s.phase = phase;
+    Object.keys(screens).forEach(function (k) { screens[k].hidden = k !== phase; });
+    window.scrollTo(0, 0);
+  }
+
+  /* ---------- Start ---------- */
+  function renderStart() {
+    var best = readBest();
+    $('best').hidden = best === null;
+    if (best !== null) $('best').innerHTML = 'Best on this device: <strong>' + best + ' of 10 cookies</strong>';
+    if (s.name) $('name').value = s.name;
+    show('start');
+  }
+
+  function newGame() {
+    var qs = pickQuestions();
+    s = {
+      phase: 'play',
+      name: $('name').value.trim().slice(0, 20),
+      qs: qs,
+      i: 0,
+      picks: qs.map(function () { return null; }),
+      orders: qs.map(function () { return shuffle([0, 1, 2, 3]); }),
+      removed: qs.map(function () { return []; }),
+      hints: qs.map(function () { return false; }),
+      fifty: false,
+      teacher: false,
+      revealed: false
+    };
+    buildLadder();
+    renderPlay();
+    show('play');
+    ansBtns[0].focus();
+  }
+
+  /* ---------- Play ---------- */
+  function buildLadder() {
+    var ol = $('ladder');
+    ol.innerHTML = '';
+    for (var n = 10; n >= 1; n--) {
+      var li = document.createElement('li');
+      li.className = 'rung';
+      li.innerHTML = '<span class="r-num">' + n + '</span><span class="r-sub"></span><span class="r-slot"></span>';
+      li.querySelector('.r-sub').textContent = SUBJECTS[BANK[s.qs[n - 1]][0]];
+      ol.appendChild(li);
+    }
+  }
+
+  function renderLadder(popIndex) {
+    var rungs = $('ladder').children;
+    for (var k = 0; k < rungs.length; k++) {
+      var n = 10 - k, idx = n - 1, li = rungs[k];
+      var pick = s.picks[idx];
+      li.className = 'rung' + (idx === s.i && s.phase === 'play' ? ' now' : '') + (pick !== null ? ' done' : '');
+      var won = pick === 0;
+      li.querySelector('.r-slot').innerHTML = won ? '<i class="cookie' + (idx === popIndex ? ' pop' : '') + '"></i>' : '<i class="plate"></i>';
+      li.setAttribute('aria-label', 'Question ' + n + ', ' + SUBJECTS[BANK[s.qs[idx]][0]] +
+        (pick === null ? '' : won ? ', cookie earned' : ', no cookie'));
+      if (idx === s.i) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+    }
+  }
+
+  function renderPlay(popIndex) {
+    var q = BANK[s.qs[s.i]];
+    var options = [q[3], q[4], q[5], q[6]];
+    var pick = s.picks[s.i];
+
+    $('qn').textContent = s.i + 1;
+    $('subject').textContent = SUBJECTS[q[0]];
+    $('qtext').textContent = q[2];
+
+    ansBtns.forEach(function (btn, pos) {
+      var orig = s.orders[s.i][pos];
+      btn.dataset.orig = orig;
+      btn.querySelector('.ans-in span').textContent = options[orig];
+      var gone = s.removed[s.i].indexOf(orig) !== -1;
+      btn.className = 'ans' + (gone ? ' gone' : '');
+      if (s.revealed) {
+        if (orig === 0) btn.classList.add('correct');
+        if (orig === 0 && pick === 0) btn.classList.add('win');
+        if (orig === pick && pick !== 0) btn.classList.add('wrong');
+        if (orig !== 0 && orig !== pick) btn.classList.add('dim');
+      }
+      btn.disabled = s.revealed || gone;
+      btn.setAttribute('aria-label', LETTERS[pos] + ': ' + options[orig]);
+    });
+
+    $('teacher').hidden = !s.hints[s.i];
+    $('hint').textContent = q[7];
+
+    $('fifty').disabled = s.fifty || s.revealed;
+    $('ask').disabled = s.teacher || s.revealed;
+    $('helpers').hidden = s.revealed && s.fifty && s.teacher;
+
+    var fb = $('feedback');
+    fb.hidden = !s.revealed;
+    if (s.revealed) {
+      var right = pick === 0;
+      var correctPos = s.orders[s.i].indexOf(0);
+      fb.className = 'feedback ' + (right ? 'good' : 'bad');
+      $('fb-head').innerHTML = right
+        ? '<i class="cookie" aria-hidden="true"></i><span>Correct! One cookie for you.</span>'
+        : '<span>Not this time. No cookie.</span>';
+      $('fb-ans').innerHTML = right ? '' : 'The answer is <strong></strong>';
+      if (!right) $('fb-ans').querySelector('strong').textContent = LETTERS[correctPos] + ': ' + q[3];
+      $('fb-ans').hidden = right;
+      $('fb-why').textContent = q[8];
+      $('next').textContent = s.i < 9 ? 'Next question' : 'See my cookies';
+    }
+
+    var n = score();
+    $('jar-n').textContent = n;
+    $('jar-who').textContent = (s.name ? s.name + '’s ' : '') + (n === 1 ? 'cookie' : 'cookies');
+    renderLadder(popIndex);
+  }
+
+  function choose(pos) {
+    if (s.phase !== 'play' || s.revealed || lockTimer) return;
+    var btn = ansBtns[pos];
+    if (btn.disabled) return;
+    var orig = parseInt(btn.dataset.orig, 10);
+    ansBtns.forEach(function (b) { b.disabled = true; });
+    $('fifty').disabled = true; $('ask').disabled = true;
+    btn.classList.add('locked');
+    tone([392], 'sine', 0.2, 0.08);
+    lockTimer = setTimeout(function () {
+      lockTimer = null;
+      s.picks[s.i] = orig;
+      s.revealed = true;
+      if (orig === 0) {
+        tone([523, 659, 784, 1047], 'triangle', 0.11, 0.16);
+        renderPlay(s.i);
+        var jar = $('jar');
+        jar.classList.remove('bump'); void jar.offsetWidth; jar.classList.add('bump');
+      } else {
+        tone([233, 175], 'sawtooth', 0.22, 0.06);
+        renderPlay();
+      }
+      $('next').focus({ preventScroll: true });
+      var fb = $('feedback');
+      if (fb.getBoundingClientRect().bottom > window.innerHeight) fb.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'end' });
+    }, reduceMotion ? 350 : 1200);
+  }
+
+  function next() {
+    if (!s.revealed) return;
+    if (s.i < 9) {
+      s.i += 1;
+      s.revealed = false;
+      renderPlay();
+      window.scrollTo(0, 0);
+      var first = ansBtns.filter(function (b) { return !b.disabled; })[0];
+      if (first) first.focus({ preventScroll: true });
+    } else {
+      finish();
+    }
+  }
+
+  function useFifty() {
+    if (s.fifty || s.revealed || lockTimer) return;
+    s.fifty = true;
+    s.removed[s.i] = shuffle([1, 2, 3]).slice(0, 2);
+    renderPlay();
+    var first = ansBtns.filter(function (b) { return !b.disabled; })[0];
+    if (first) first.focus();
+  }
+
+  function useTeacher() {
+    if (s.teacher || s.revealed || lockTimer) return;
+    s.teacher = true;
+    s.hints[s.i] = true;
+    renderPlay();
+  }
+
+  /* ---------- Results ---------- */
+  var RANKS = [
+    [10, 'Smartest Student!', 'A perfect jar. You answered every question correctly.'],
+    [8, 'Super Scholar', 'So close to a perfect jar. Brilliant work.'],
+    [6, 'Bright Spark', 'More than half right. Have another go to fill the jar.'],
+    [3, 'Keen Learner', 'Good effort! Read the answers below and try again.'],
+    [0, 'Curious Explorer', 'Every question is a chance to learn something new. Try again!']
+  ];
+
+  function finish() {
+    var n = score();
+    var best = readBest();
+    var isBest = best === null || n > best;
+    if (isBest) saveBest(n);
+    s.phase = 'end';
+    renderEnd(isBest && best !== null);
+    show('end');
+    $('again').focus({ preventScroll: true });
+    if (n >= 8) tone([523, 659, 784, 1047, 1319], 'triangle', 0.12, 0.16);
+  }
+
+  function renderEnd(newBest) {
+    var n = score();
+    var rank = RANKS.filter(function (r) { return n >= r[0]; })[0];
+    $('end-pre').textContent = s.name ? 'Well played, ' + s.name : 'Final results';
+    $('end-title').textContent = rank[1];
+    $('end-line').textContent = rank[2];
+
+    var tray = $('tray');
+    tray.innerHTML = '';
+    for (var i = 0; i < 10; i++) {
+      var el = document.createElement('i');
+      el.className = i < n ? 'cookie' : 'plate';
+      if (i < n && !reduceMotion) { el.classList.add('pop'); el.style.animationDelay = (i * 0.08) + 's'; el.style.animationFillMode = 'backwards'; }
+      tray.appendChild(el);
+    }
+    $('tally').innerHTML = n + ' of 10 cookies<small>' + (newBest ? 'A new best on this device!' : '') + '</small>';
+
+    var ol = $('review');
+    ol.innerHTML = '';
+    s.qs.forEach(function (id, idx) {
+      var q = BANK[id], pick = s.picks[idx], right = pick === 0;
+      var li = document.createElement('li');
+      li.innerHTML = '<span class="mark"></span><span class="meta"></span><p class="qt"></p><p class="yours"></p>';
+      li.querySelector('.mark').innerHTML = right ? '<i class="cookie" aria-label="Correct"></i>' : '<i class="plate" aria-label="Wrong"></i>';
+      li.querySelector('.meta').textContent = 'Q' + (idx + 1) + ' · ' + SUBJECTS[q[0]];
+      li.querySelector('.qt').textContent = q[2];
+      var y = li.querySelector('.yours');
+      if (right) {
+        y.innerHTML = '<span class="yes">Correct:</span> <strong></strong>';
+        y.querySelector('strong').textContent = q[3];
+      } else {
+        y.innerHTML = '<span class="no">You said:</span> <span class="said"></span> · Answer: <strong></strong>';
+        y.querySelector('.said').textContent = pick === null ? '(no answer)' : q[3 + pick];
+        y.querySelector('strong').textContent = q[3];
+      }
+      ol.appendChild(li);
+    });
+  }
+
+  /* ---------- Wiring ---------- */
+  $('entry').addEventListener('submit', function (e) { e.preventDefault(); newGame(); });
+  ansBtns.forEach(function (btn, pos) { btn.addEventListener('click', function () { choose(pos); }); });
+  $('next').addEventListener('click', next);
+  $('fifty').addEventListener('click', useFifty);
+  $('ask').addEventListener('click', useTeacher);
+  $('again').addEventListener('click', function () { renderStart(); $('name').focus(); });
+  $('sound').addEventListener('click', function () {
+    sound = !sound;
+    this.textContent = sound ? 'Sound on' : 'Sound off';
+    this.setAttribute('aria-pressed', String(sound));
+  });
+  document.addEventListener('keydown', function (e) {
+    if (s.phase !== 'play' || e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key.toLowerCase();
+    var pos = 'abcd'.indexOf(k);
+    if (pos === -1 && '1234'.indexOf(k) !== -1) pos = '1234'.indexOf(k);
+    if (pos !== -1 && k.length === 1) { choose(pos); return; }
+    if (k === 'enter' && s.revealed && e.target.tagName !== 'BUTTON') next();
+  });
+
+  // Keep a game in progress when the page is updated while it is open.
+  function start(data) {
+    var saved = data && data.s;
+    if (saved && saved.phase === 'play' && saved.qs && saved.qs.every(function (id) { return BANK[id]; })) {
+      s = saved;
+      buildLadder(); renderPlay(); show('play');
+    } else if (saved && saved.phase === 'end' && saved.qs && saved.qs.every(function (id) { return BANK[id]; })) {
+      s = saved;
+      buildLadder(); renderEnd(false); show('end');
+    } else {
+      renderStart();
+    }
+  }
+  if (window.claude && window.claude.hot && window.claude.hot.snapshot) {
+    window.claude.hot.snapshot(function () { return { s: s }; });
+  }
+  if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(start);
+  else start(window.claude && window.claude.hot && window.claude.hot.data || {});
+})();
+</script>
+</body>
+</html>
