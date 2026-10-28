@@ -455,18 +455,18 @@
     sizeWheel();
   }
 
-  function renderWinners(freshId) {
+  function renderWinners(freshIds = []) {
     el.winnerList.replaceChildren(...state.winners.map((w, i) => {
       const li = document.createElement('li');
       const b = document.createElement('b');
       b.textContent = i + 1;
       li.append(b, document.createTextNode(w.label));
-      if (w.id === freshId) li.classList.add('fresh');
+      if (freshIds.includes(w.id)) li.classList.add('fresh');
       return li;
     }));
     el.noWinners.hidden = state.winners.length > 0;
     el.winnerCount.textContent = state.winners.length ? `${state.winners.length} of ${state.entries.length}` : '';
-    if (freshId !== undefined) el.winnerList.lastElementChild?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (freshIds.length) el.winnerList.lastElementChild?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   /* ---------- Wheel drawing ---------- */
@@ -652,10 +652,17 @@
     pendingWinner = null;
     state.remaining = state.remaining.filter((x) => x.id !== item.id);
     state.winners.push(item);
+    const fresh = [item.id];
+    // Only one left: no need to spin, it is the last winner.
+    if (state.remaining.length === 1) {
+      const last = state.remaining.pop();
+      state.winners.push(last);
+      fresh.push(last.id);
+    }
     if (!state.remaining.length) state.phase = 'over';
     save();
     render();
-    renderWinners(item.id);
+    renderWinners(fresh);
     if (state.phase === 'over') showFinal();
     else el.spin.focus();
   });
