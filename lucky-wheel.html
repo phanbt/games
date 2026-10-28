@@ -241,7 +241,10 @@
   <!-- Setup screen -->
   <section id="setup" class="setup">
     <header>
-      <h1>Lucky <span>Wheel</span></h1>
+      <div class="row spread">
+        <h1>Lucky <span>Wheel</span></h1>
+        <button class="btn small theme-toggle" type="button"></button>
+      </div>
       <p class="lede">Enter the names, items or numbers to draw from &mdash; one per line.</p>
     </header>
     <div class="card" style="display:flex;flex-direction:column;gap:12px">
@@ -278,6 +281,7 @@
         <button class="btn" id="replay" type="button">↻ Replay</button>
         <button class="btn" id="reset" type="button">⟲ Reset</button>
         <button class="btn small" id="sound" type="button" aria-pressed="true" title="Sound on/off">🔊</button>
+        <button class="btn small theme-toggle" type="button"></button>
       </div>
     </div>
     <div class="play" style="margin-top:24px">
@@ -356,9 +360,10 @@
   let spinning = false;
   let pendingWinner = null;
   let soundOn = true;
+  let theme = null; // 'light' | 'dark', or null to follow the device setting
 
   function save() {
-    try { localStorage.setItem(STORE, JSON.stringify({ ...state, soundOn })); } catch (e) {}
+    try { localStorage.setItem(STORE, JSON.stringify({ ...state, soundOn, theme })); } catch (e) {}
   }
   function load() {
     try {
@@ -366,6 +371,7 @@
       if (s && Array.isArray(s.entries)) {
         state = { phase: s.phase, draft: s.draft || '', entries: s.entries, remaining: s.remaining || [], winners: s.winners || [], rotation: s.rotation || 0 };
         soundOn = s.soundOn !== false;
+        if (s.theme === 'light' || s.theme === 'dark') theme = s.theme;
       }
     } catch (e) {}
   }
@@ -767,11 +773,31 @@
   }
 
   // Redraw when the theme flips so the rim matches.
-  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', draw);
+  /* ---------- Night mode ---------- */
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => (theme ? theme === 'dark' : systemDark.matches);
+  function applyTheme() {
+    if (theme) document.documentElement.dataset.theme = theme;
+    else delete document.documentElement.dataset.theme;
+    const dark = isDark();
+    document.querySelectorAll('.theme-toggle').forEach((b) => {
+      b.textContent = dark ? '☀️ Day' : '🌙 Night';
+      b.title = dark ? 'Switch to day mode' : 'Switch to night mode';
+      b.setAttribute('aria-pressed', String(dark));
+    });
+    draw();
+  }
+  document.querySelectorAll('.theme-toggle').forEach((b) => b.addEventListener('click', () => {
+    theme = isDark() ? 'light' : 'dark';
+    applyTheme();
+    save();
+  }));
+  systemDark.addEventListener?.('change', applyTheme);
   document.fonts?.ready.then(draw);
 
   load();
   syncSoundBtn();
+  applyTheme();
   if (state.phase !== 'setup' && !state.entries.length) state.phase = 'setup';
   render();
 })();
